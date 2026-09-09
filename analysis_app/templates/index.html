@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语义匹配数据分析平台</title>
+    <style>
+        /* ===== 设计变量 ===== */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-dark: #059669;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --danger-light: #fee2e2;
+            --neutral: #6b7280;
+            --neutral-light: #f3f4f6;
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
+            --white: #fff;
+            --bg: #f5f7fb;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+            --shadow: 0 4px 12px rgba(0,0,0,.08);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: #1f2937;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #6366f1 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        header h1 { text-align: center; font-size: 2.5rem; font-weight: 600; }
+        header p { text-align: center; margin-top: 10px; opacity: 0.9; }
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center; }
+        .stat-card h3 { font-size: 2rem; color: #667eea; margin-bottom: 5px; }
+        .stat-card p { color: #666; font-size: 0.9rem; }
+        .search-bar { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .search-bar input { flex: 1; min-width: 300px; padding: 12px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+        .search-bar input:focus { outline: none; border-color: #667eea; }
+        .search-bar button { padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .search-bar button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+        .category-card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .category-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+        .category-header { padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .category-header h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .category-header .count { font-size: 1.5rem; font-weight: 700; }
+        .category-body { padding: 20px; }
+        .match-details { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .match-detail-tag { background: #f0f4f8; color: #4a5568; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; white-space: nowrap; }
+        .data-codes { display: flex; flex-wrap: wrap; gap: 6px; }
+        .data-code-tag { background: #eef2ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-family: monospace; white-space: nowrap; }
+        .data-code-tag.more { background: #fef3c7; color: #b45309; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 20px; }
+        .modal.active { display: flex; align-items: flex-start; justify-content: center; }
+        .modal-content { background: white; border-radius: 12px; max-width: 1000px; width: 100%; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e1e5e9; background: #fafbfc; }
+        .modal-header h2 { font-size: 1.3rem; color: #333; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; padding: 5px 10px; }
+        .modal-close:hover { color: #333; }
+        .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+        .record-list { display: grid; gap: 12px; }
+        .record-item { border: 1px solid #e1e5e9; border-radius: 8px; padding: 15px; transition: background 0.2s; }
+        .record-item:hover { background: #fafbfc; }
+        .record-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .record-code { font-family: monospace; background: #eef2ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; }
+        .record-match-detail { background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; }
+        .record-text-preview { color: #4a5568; font-size: 0.9rem; line-height: 1.7; padding: 10px; background: #fafbfc; border-radius: 6px; border-left: 3px solid #667eea; cursor: pointer; transition: background 0.2s; }
+        .record-text-preview:hover { background: #f0f4f8; }
+        .text-modal-content { max-width: 900px; }
+        .text-detail { white-space: pre-wrap; word-break: break-word; line-height: 1.8; padding: 20px; background: #fafbfc; border-radius: 8px; border: 1px solid #e1e5e9; max-height: 60vh; overflow-y: auto; font-size: 0.95rem; }
+        .text-meta { display: flex; gap: 20px; padding: 15px 20px; background: #f0f4f8; border-radius: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .text-meta-item { font-size: 0.85rem; color: #4a5568; }
+        .text-meta-item strong { color: #333; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .loading::after { content: ''; display: inline-block; width: 20px; height: 20px; border: 3px solid #e1e5e9; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.5; }
+        .empty-state h3 { margin-bottom: 10px; }
+        .empty-state p { font-size: 0.9rem; }
+        @media (max-width: 768px) {
+            .category-grid { grid-template-columns: 1fr; }
+            .search-bar { flex-direction: column; }
+            .search-bar input { min-width: 100%; }
+            .search-bar button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>语义匹配数据分析平台</h1>
+            <p>基于 Label_data 表的 match_type 分类统计与文本详情查看</p>
+        </div>
+    </header>
+
+    <!-- 导航标签页 -->
+    <nav class="nav-tabs" style="max-width: 1400px; margin: -30px auto 30px; border-radius: 12px 12px 0 0; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+        <a href="/" class="nav-tab active" style="max-width: 200px; padding: 16px 24px; text-align: center; background: white; color: #667eea; font-weight: 500; font-size: 1rem; border-bottom: 3px solid #667eea; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            标签分类
+        </a>
+        <a href="/data" class="nav-tab" style="max-width: 200px; padding: 16px 24px; text-align: center; background: #f5f7fa; color: #666; font-weight: 500; font-size: 1rem; border-bottom: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            数据分类
+        </a>
+        <a href="/element_code" class="nav-tab" style="max-width: 200px; padding: 16px 24px; text-align: center; background: #f5f7fa; color: #666; font-weight: 500; font-size: 1rem; border-bottom: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            元素代码表
+        </a>
+        <a href="/indicator_code" class="nav-tab" style="max-width: 200px; padding: 16px 24px; text-align: center; background: #f5f7fa; color: #666; font-weight: 500; font-size: 1rem; border-bottom: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            指标代码表
+        </a>
+        <a href="/evaluation_code" class="nav-tab" style="max-width: 200px; padding: 16px 24px; text-align: center; background: #f5f7fa; color: #666; font-weight: 500; font-size: 1rem; border-bottom: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 19V6l-4-4-4 4M5 12h14M12 5v14"/>
+            </svg>
+            评价代码表
+        </a>
+    </nav>
+
+    <div class="container">
+        <div class="stats-bar" id="statsBar"></div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="搜索 match_type、match_detail、data_code 或文本内容...">
+            <button onclick="performSearch()">搜索</button>
+        </div>
+
+        <div class="category-grid" id="categoryGrid"></div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3>暂无数据</h3>
+            <p>没有找到匹配的分类或记录</p>
+        </div>
+    </div>
+
+    <!-- 分类详情弹窗 -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">分类详情</h2>
+                <button class="modal-close" onclick="closeModal('categoryModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文本详情弹窗 -->
+    <div class="modal" id="textModal">
+        <div class="modal-content text-modal-content">
+            <div class="modal-header">
+                <h2 id="textModalTitle">文本详情</h2>
+                <button class="modal-close" onclick="closeModal('textModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="text-meta" id="textMeta"></div>
+                <div class="text-detail" id="textDetail"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCategories = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategories();
+            document.getElementById('searchInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') performSearch(); });
+            document.getElementById('categoryModal').addEventListener('click', function(e) { if (e.target === this) closeModal('categoryModal'); });
+            document.getElementById('textModal').addEventListener('click', function(e) { if (e.target === this) closeModal('textModal'); });
+        });
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/');
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const script = doc.querySelector('script');
+                eval(script.textContent);
+                const res = await fetch('/api/categories');
+                allCategories = await res.json();
+                renderCategories(allCategories);
+                renderStats(allCategories);
+            } catch (error) {
+                console.error('加载失败:', error);
+                document.getElementById('categoryGrid').innerHTML = '<div class="empty-state"><h3>加载失败</h3></div>';
+            }
+        }
+
+        function renderStats(categories) {
+            const totalCategories = categories.length;
+            const totalRecords = categories.reduce((sum, c) => sum + c.count, 0);
+            const totalMatchDetails = new Set(categories.flatMap(c => c.match_details)).size;
+            const totalDataCodes = new Set(categories.flatMap(c => c.data_codes)).size;
+
+            document.getElementById('statsBar').innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalCategories}</h3>
+                    <p>分类数量</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${totalRecords}</h3>
+                    <p>总记录数</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${totalMatchDetails}</h3>
+                    <p>匹配关键字数</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${totalDataCodes}</h3>
+                    <p>数据编号数</p>
+                </div>
+            `;
+        }
+
+        function renderCategories(categories) {
+            const grid = document.getElementById('categoryGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (categories.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            document.getElementById('emptyState').style.display = 'none';
+
+            grid.innerHTML = categories.map(cat => {
+                const details = cat.match_details.filter(d => d).slice(0, 5);
+                const codes = cat.data_codes.filter(c => c).slice(0, 8);
+                const moreCodes = cat.data_codes.length > 8;
+
+                return `
+                    <div class="category-card" onclick="openCategoryModal('${cat.match_type}')">
+                        <div class="category-header">
+                            <h3>${cat.match_type}</h3>
+                            <div class="count">${cat.count} 条记录</div>
+                        </div>
+                        <div class="category-body">
+                            <div class="match-details">
+                                ${details.map(d => `<span class="match-detail-tag">${d}</span>`).join('')}
+                                ${cat.match_details.length > 5 ? `<span class="match-detail-tag">+${cat.match_details.length - 5} 更多</span>` : ''}
+                            </div>
+                            <div class="data-codes">
+                                ${codes.map(c => `<span class="data-code-tag">${c}</span>`).join('')}
+                                ${moreCodes ? `<span class="data-code-tag more">+${cat.data_codes.length - 8} 更多</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openCategoryModal(matchType) {
+            const modal = document.getElementById('categoryModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            title.textContent = `${matchType} - 详细记录`;
+            body.innerHTML = '<div class="loading">加载中...</div>';
+            modal.classList.add('active');
+
+            try {
+                const response = await fetch(`/api/category/${encodeURIComponent(matchType)}`);
+                const records = await response.json();
+
+                if (records.length === 0) {
+                    body.innerHTML = '<div class="empty-state"><h3>暂无记录</h3></div>';
+                    return;
+                }
+
+                body.innerHTML = `
+                    <div class="record-list">
+                        ${records.map(r => `
+                            <div class="record-item">
+                                <div class="record-header">
+                                    <span class="record-code">${r.data_code}</span>
+                                    <span class="record-match-detail">${r.match_detail || '无'}</span>
+                                </div>
+                                <div class="record-text-preview" onclick="openTextModal('${r.data_code}')">
+                                    ${r.text_content ? r.text_content.substring(0, 200) + (r.text_content.length > 200 ? '...' : '') : '<em>无文本内容</em>'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('加载详情失败:', error);
+                body.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请重试</p></div>';
+            }
+        }
+
+        async function openTextModal(dataCode) {
+            const modal = document.getElementById('textModal');
+            const title = document.getElementById('textModalTitle');
+            const meta = document.getElementById('textMeta');
+            const detail = document.getElementById('textDetail');
+
+            title.textContent = `数据编号: ${dataCode}`;
+            detail.textContent = '加载中...';
+            meta.innerHTML = '';
+            modal.classList.add('active');
+
+            try {
+                const response = await fetch(`/api/text/${encodeURIComponent(dataCode)}`);
+                const record = await response.json();
+
+                if (record.error) {
+                    detail.textContent = '未找到文本内容';
+                    return;
+                }
+
+                meta.innerHTML = `
+                    <div class="text-meta-item"><strong>数据来源:</strong> ${record.data_source || '未知'}</div>
+                    <div class="text-meta-item"><strong>文本长度:</strong> ${record.text_length || 0} 字符</div>
+                    <div class="text-meta-item"><strong>创建时间:</strong> ${record.created_at || '未知'}</div>
+                `;
+                detail.textContent = record.text_content || '无内容';
+            } catch (error) {
+                console.error('加载文本失败:', error);
+                detail.textContent = '加载失败，请重试';
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!query) {
+                renderCategories(allCategories);
+                return;
+            }
+
+            const filtered = allCategories.filter(cat =>
+                cat.match_type.toLowerCase().includes(query) ||
+                cat.match_details.some(d => d.toLowerCase().includes(query)) ||
+                cat.data_codes.some(c => c.toLowerCase().includes(query))
+            );
+
+            renderCategories(filtered);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+    </script>
+</body>
+</html>

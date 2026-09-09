@@ -1,0 +1,21 @@
+import mysql.connector
+db_config = {
+    'host': '47.95.169.233',
+    'port': 3306,
+    'user': 'root',
+    'password': 'lxy_2000',
+    'database': 'aivoc',
+}
+print("Connecting...")
+conn = mysql.connector.connect(**db_config)
+print("Connected")
+cursor = conn.cursor()
+print("Executing query...")
+cursor.execute('SELECT data_code, HEX(data_code), text_content IS NULL as is_null, LENGTH(text_content) as len FROM txt_data WHERE data_code LIKE "D2026%"')
+rows = cursor.fetchall()
+print(f'Rows returned: {len(rows)}')
+for r in rows:
+    print(f'  data_code={repr(r[0])} hex={r[1]} is_null={r[2]} len={r[3]}')
+cursor.close()
+conn.close()
+print("Done")

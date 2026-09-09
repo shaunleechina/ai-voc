@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ code_table_cn }} - 语义匹配数据分析平台</title>
+    <style>
+        /* ===== 设计变量 ===== */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-dark: #059669;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --danger-light: #fee2e2;
+            --neutral: #6b7280;
+            --neutral-light: #f3f4f6;
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
+            --white: #ffffff;
+            --bg: #f5f7fb;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--neutral-800);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--neutral-300); border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        /* ===== 头部 ===== */
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 28px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            top: -60%; right: -10%;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+        .header-inner { max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; }
+        .header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header p { opacity: 0.9; font-size: 0.95rem; margin-top: 6px; font-weight: 400; }
+
+        /* ===== 导航 ===== */
+        .nav {
+            max-width: 1400px; margin: 0 auto; padding: 0 24px;
+            display: flex; gap: 4px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-top: -20px;
+            position: relative; z-index: 5;
+            padding: 6px;
+            overflow-x: auto;
+        }
+        .nav-tab {
+            flex: 1; min-width: max-content;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--neutral-500);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-tab:hover { background: var(--neutral-100); color: var(--primary-dark); }
+        .nav-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.35); }
+
+        /* ===== 主容器 ===== */
+        .wrap { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+        /* ===== 统计卡 ===== */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .stat {
+            background: var(--white); border-radius: var(--radius);
+            padding: 18px 16px; text-align: center;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--neutral-200);
+        }
+        .stat b { display: block; font-size: 1.75rem; font-weight: 700; color: var(--neutral-800); }
+        .stat span { font-size: 0.78rem; color: var(--neutral-500); }
+
+        /* ===== 搜索 ===== */
+        .searchbar { display: flex; gap: 10px; margin-bottom: 24px; }
+        .searchbar input {
+            flex: 1; padding: 12px 16px; font-size: 0.9rem;
+            border: 2px solid var(--neutral-200); border-radius: var(--radius-sm);
+            font-family: inherit; transition: all 0.2s;
+        }
+        .searchbar input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .searchbar button {
+            padding: 12px 28px; background: var(--primary); color: white;
+            border: none; border-radius: var(--radius-sm); font-weight: 600;
+            cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .searchbar button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        /* ===== 一级代码区块 ===== */
+        .section {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .section-head {
+            padding: 16px 24px;
+            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(90deg, #f9fafb 0%, #ffffff 100%);
+            border-bottom: 1px solid var(--neutral-200);
+        }
+        .code-badge {
+            background: var(--primary-light); color: var(--primary-dark);
+            padding: 6px 14px; border-radius: 30px;
+            font-weight: 700; font-size: 0.85rem;
+            font-family: 'Consolas', monospace;
+        }
+        .code-name { font-weight: 600; color: var(--neutral-800); font-size: 1.05rem; }
+
+        /* ===== 三格平铺 ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 20px 24px;
+        }
+        .card {
+            border-radius: var(--radius);
+            border: 1px solid var(--neutral-200);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            transition: all 0.2s;
+            background: var(--white);
+        }
+        .card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+        .card-head { padding: 14px 18px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+        .card-head .cnt { font-size: 1.4rem; font-weight: 700; }
+        .card.pos .card-head { background: var(--success-light); color: var(--success-dark); }
+        .card.neg .card-head { background: var(--danger-light); color: var(--danger-dark); }
+        .card.neu .card-head { background: var(--neutral-100); color: var(--neutral-600); }
+        .card-body { padding: 14px 18px; flex: 1; display: flex; flex-direction: column; }
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .tag {
+            font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;
+            background: var(--primary-light); color: var(--primary-dark);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .tag:hover { background: var(--primary); color: white; }
+        .codes { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+        .code-chip {
+            font-size: 0.68rem; padding: 3px 8px; border-radius: 4px;
+            background: var(--neutral-100); color: var(--neutral-600);
+            font-family: 'Consolas', monospace;
+        }
+        .btn {
+            margin-top: auto;
+            padding: 9px 0; text-align: center;
+            background: var(--primary-light); color: var(--primary-dark);
+            border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            border: none; font-family: inherit;
+        }
+        .btn:hover { background: var(--primary); color: white; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ===== 空状态 ===== */
+        .empty { text-align: center; padding: 60px; color: var(--neutral-500); }
+
+        /* ===== 弹窗 ===== */
+        .modal {
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(17,24,39,0.6);
+            backdrop-filter: blur(3px);
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .modal.active { display: flex; align-items: flex-start; justify-content: center; }
+        .modal-box {
+            background: white; border-radius: 14px; width: 100%; max-width: 1000px;
+            box-shadow: var(--shadow-lg); overflow: hidden;
+            animation: pop 0.25s ease;
+        }
+        @keyframes pop { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        .modal-head {
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--neutral-200); background: var(--neutral-50);
+        }
+        .modal-head h2 { font-size: 1.2rem; font-weight: 700; color: var(--neutral-800); }
+        .modal-x { border: none; background: none; font-size: 1.6rem; cursor: pointer; color: var(--neutral-500); line-height: 1; }
+        .modal-x:hover { color: var(--neutral-800); }
+        .modal-body { padding: 20px 24px; max-height: 70vh; overflow-y: auto; }
+
+        /* 筛选 */
+        .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .filters select, .filters input {
+            padding: 9px 12px; border: 1px solid var(--neutral-200); border-radius: 8px;
+            font-family: inherit; font-size: 0.85rem;
+        }
+        .filters select:focus, .filters input:focus { outline: none; border-color: var(--primary); }
+
+        /* 明细列表 */
+        .records { display: flex; flex-direction: column; gap: 12px; }
+        .record {
+            border: 1px solid var(--neutral-200); border-radius: 10px; padding: 14px 16px;
+        }
+        .record-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .rec-code { font-family: monospace; background: var(--primary-light); color: var(--primary-dark); padding: 2px 8px; border-radius: 5px; font-size: 0.78rem; }
+        .rec-type { background: var(--success-light); color: var(--success-dark); padding: 2px 8px; border-radius: 5px; font-size: 0.75rem; }
+        .rec-kw { background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 5px; font-size: 0.75rem; }
+        .field { margin-top: 10px; }
+        .field-label { font-size: 0.78rem; font-weight: 600; color: var(--neutral-500); margin-bottom: 4px; }
+        .field-val {
+            font-size: 0.85rem; line-height: 1.7; color: var(--neutral-700);
+            padding: 10px 12px; background: var(--neutral-50); border-radius: 8px; border-left: 3px solid var(--primary);
+        }
+        .field-val.reason { border-left-color: var(--danger); }
+        .viewfull {
+            margin-top: 10px; display: inline-block; padding: 7px 14px;
+            background: var(--neutral-100); border-radius: 6px;
+            font-size: 0.82rem; cursor: pointer; color: var(--primary-dark);
+            transition: all 0.2s;
+        }
+        .viewfull:hover { background: var(--primary); color: white; }
+
+        .loading { text-align: center; padding: 50px; color: var(--neutral-500); }
+        .loading::after {
+            content: ''; display: inline-block; width: 22px; height: 22px;
+            border: 3px solid var(--neutral-200); border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-left: 10px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+            .nav { flex-wrap: nowrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-inner">
+            <h1>{{ code_table_cn }}</h1>
+            <p>按一级代码分类，展示正向褒义、负向贬义、中性分布</p>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <a href="/" class="nav-tab">标签分类</a>
+        <a href="/data" class="nav-tab">数据分类</a>
+        <a href="/element_code" class="nav-tab {% if code_table == 'element_code' %}active{% endif %}">元素代码表</a>
+        <a href="/indicator_code" class="nav-tab {% if code_table == 'indicator_code' %}active{% endif %}">指标代码表</a>
+        <a href="/evaluation_code" class="nav-tab {% if code_table == 'evaluation_code' %}active{% endif %}">评价代码表</a>
+    </nav>
+
+    <div class="wrap">
+        <div class="stats" id="stats"></div>
+
+        <div class="searchbar">
+            <input type="text" id="searchInput" placeholder="搜索一级代码、语义分类、匹配关键词、数据编号...">
+            <button onclick="doSearch()">搜索</button>
+        </div>
+
+        <div id="sections"></div>
+        <div class="empty" id="empty" style="display:none;">暂无数据</div>
+    </div>
+
+    <!-- 明细弹窗 -->
+    <div class="modal" id="detailModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h2 id="detailTitle">明细</h2>
+                <button class="modal-x" onclick="closeModal('detailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="detailBody"><div class="loading">加载中...</div></div>
+        </div>
+    </div>
+
+    <!-- 全文弹窗 -->
+    <div class="modal" id="textModal">
+        <div class="modal-box" style="max-width:900px;">
+            <div class="modal-head">
+                <h2 id="textTitle">原文</h2>
+                <button class="modal-x" onclick="closeModal('textModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="textBody"><div class="loading">加载中...</div></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let codeTable = '{{ code_table }}';
+        let filtered = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
+            ['detailModal','textModal'].forEach(id => {
+                document.getElementById(id).addEventListener('click', e => { if (e.target === this) closeModal(id); });
+            });
+        });
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/sentiment_by_firstcode?code_table=' + encodeURIComponent(codeTable));
+                allData = await res.json();
+                filtered = allData;
+                render();
+            } catch (e) {
+                document.getElementById('sections').innerHTML = '<div class="empty">加载失败：' + e.message + '</div>';
+            }
+        }
+
+        function render() {
+            const statsEl = document.getElementById('stats');
+            const secEl = document.getElementById('sections');
+            const emptyEl = document.getElementById('empty');
+
+            if (!filtered.length) { secEl.style.display='none'; emptyEl.style.display='block'; statsEl.innerHTML=''; return; }
+            secEl.style.display='block'; emptyEl.style.display='none';
+
+            // 统计
+            let total=0, pos=0, neg=0, neu=0;
+            filtered.forEach(fc => {
+                fc.tables.forEach(t => {
+                    [1,2,0].forEach(s => {
+                        const st = t.sentiments[String(s)] || {count:0};
+                        total += st.count;
+                        if(s===1) pos+=st.count; else if(s===2) neg+=st.count; else neu+=st.count;
+                    });
+                });
+            });
+            statsEl.innerHTML = `
+                <div class="stat"><b>${filtered.length}</b><span>一级代码</span></div>
+                <div class="stat"><b>${total}</b><span>标签总数</span></div>
+                <div class="stat"><b>${pos}</b><span>正向褒义</span></div>
+                <div class="stat"><b>${neg}</b><span>负向贬义</span></div>
+                <div class="stat"><b>${neu}</b><span>中性</span></div>
+            `;
+
+            secEl.innerHTML = filtered.map(fc => {
+                // 聚合三个情感
+                const agg = {pos:{count:0,m:[],c:[]}, neg:{count:0,m:[],c:[]}, neu:{count:0,m:[],c:[]}};
+                fc.tables.forEach(t => {
+                    ['1','2','0'].forEach(s => {
+                        const st = t.sentiments[String(s)] || {count:0,match_types:[],data_codes:[]};
+                        const k = s==='1'?'pos':s==='2'?'neg':'neu';
+                        agg[k].count += st.count;
+                        (st.match_types||[]).forEach(x => { if(!agg[k].m.includes(x)) agg[k].m.push(x); });
+                        (st.data_codes||[]).forEach(x => { if(!agg[k].c.includes(x)) agg[k].c.push(x); });
+                    });
+                });
+                return `
+                <div class="section">
+                    <div class="section-head">
+                        <span class="code-badge">${fc.first_code}</span>
+                        <span class="code-name">${fc.first_code_name}</span>
+                    </div>
+                    <div class="grid">
+                        ${cardHTML('正向褒义','pos',agg.pos,1,fc.first_code)}
+                        ${cardHTML('负向贬义','neg',agg.neg,2,fc.first_code)}
+                        ${cardHTML('中性','neu',agg.neu,0,fc.first_code)}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function cardHTML(label, cls, data, sentiment, firstCode) {
+            return `
+            <div class="card ${cls}">
+                <div class="card-head">
+                    <span>${label}</span>
+                    <span class="cnt">${data.count} 条</span>
+                </div>
+                <div class="card-body">
+                    <div class="tags">
+                        ${data.m.slice(0,6).map(x => `<span class="tag">${x}</span>`).join('')}
+                        ${data.m.length>6 ? `<span class="tag">+${data.m.length-6}</span>` : ''}
+                    </div>
+                    <div class="codes">
+                        ${data.c.slice(0,5).map(x => `<span class="code-chip">${x}</span>`).join('')}
+                        ${data.c.length>5 ? `<span class="code-chip">+${data.c.length-5}</span>` : ''}
+                    </div>
+                    <button class="btn" ${data.count>0?'':'disabled'} onclick="openDetail('${firstCode}',${sentiment})">查看明细 →</button>
+                </div>
+            </div>`;
+        }
+
+        async function openDetail(firstCode, sentiment) {
+            const modal = document.getElementById('detailModal');
+            const title = document.getElementById('detailTitle');
+            const body = document.getElementById('detailBody');
+            const labels = {1:'正向褒义',2:'负向贬义',0:'中性'};
+            title.textContent = `一级代码 ${firstCode} - ${labels[sentiment]} 明细`;
+            body.innerHTML = '<div class="loading">加载中...</div>';
+            modal.classList.add('active');
+
+            try {
+                const res = await fetch(`/api/sentiment_detail?code_table=${codeTable}&first_code=${firstCode}&sentiment=${sentiment}`);
+                const records = await res.json();
+                window._records = records;
+                if(!records.length){ body.innerHTML='<div class="empty">暂无记录</div>'; return; }
+
+                const mtypes = [...new Set(records.map(r=>r.match_type).filter(Boolean))].sort();
+                const dcodes = [...new Set(records.map(r=>r.data_code).filter(Boolean))].sort();
+
+                body.innerHTML = `
+                    <div class="filters">
+                        <select id="fType" onchange="applyFilter()">
+                            <option value="">全部语义分类</option>
+                            ${mtypes.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('')}
+                        </select>
+                        <select id="fCode" onchange="applyFilter()">
+                            <option value="">全部数据编号</option>
+                            ${dcodes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+                        </select>
+                        <input id="fKw" placeholder="关键词..." oninput="applyFilter()">
+                    </div>
+                    <div class="records" id="recList">${recordHTML(records)}</div>
+                `;
+            } catch(e) { body.innerHTML='<div class="empty">加载失败</div>'; }
+        }
+
+        function applyFilter() {
+            const t = document.getElementById('fType').value;
+            const c = document.getElementById('fCode').value;
+            const k = (document.getElementById('fKw').value||'').toLowerCase();
+            const rows = (window._records||[]).filter(r => {
+                if(t && r.match_type!==t) return false;
+                if(c && r.data_code!==c) return false;
+                if(k){
+                    const text = ((r.match_detail||'')+' '+(r.original_sentence||'')+' '+(r.sentiment_reason||'')).toLowerCase();
+                    if(!text.includes(k)) return false;
+                }
+                return true;
+            });
+            document.getElementById('recList').innerHTML = recordHTML(rows);
+        }
+
+        function recordHTML(records) {
+            const labels={1:'正向褒义',2:'负向贬义',0:'中性'};
+            const styles={1:'background:#d1fae5;color:#059669',2:'background:#fee2e2;color:#dc2626',0:'background:#f3f4f6;color:#6b7280'};
+            return records.map(r=>{
+                const s=r.sentiment||0;
+                return `
+                <div class="record">
+                    <div class="record-head">
+                        <span class="rec-code">${esc(r.data_code)}</span>
+                        <span class="rec-type">${esc(r.match_type)}</span>
+                        <span class="rec-kw">${esc(r.match_detail||'')}</span>
+                        <span style="font-size:0.75rem;padding:2px 8px;border-radius:5px;${styles[s]}">${labels[s]}</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">关键句子 (原文)</div>
+                        <div class="field-val">${esc(r.original_sentence||'无')}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">标注原因 (sentiment_reason)</div>
+                        <div class="field-val reason">${esc(r.sentiment_reason||'无')}</div>
+                    </div>
+                    <span class="viewfull" onclick="viewText('${esc(r.data_code)}')">查看完整原文 →</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function viewText(code) {
+            const modal = document.getElementById('textModal');
+            const title = document.getElementById('textTitle');
+            const body = document.getElementById('textBody');
+            title.textContent = '原文 - ' + code;
+            body.innerHTML = '<div class="loading">加载中...</div>';
+            modal.classList.add('active');
+            try {
+                const res = await fetch('/api/text/'+encodeURIComponent(code));
+                const rec = await res.json();
+                body.innerHTML = rec.error ? '<div class="empty">未找到</div>' :
+                    `<div style="font-size:0.8rem;color:var(--neutral-500);margin-bottom:8px">来源：${esc(rec.data_source||'未知')} · 长度：${rec.text_length||0} 字符</div>
+                     <div style="white-space:pre-wrap;line-height:1.8;font-size:0.92rem">${esc(rec.text_content)}</div>`;
+            } catch(e){ body.innerHTML='<div class="empty">加载失败</div>'; }
+        }
+
+        function doSearch() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            if(!q){ filtered=allData; render(); return; }
+            filtered = allData.filter(fc => {
+                const name = (fc.first_code_name||'').toLowerCase();
+                const code = (fc.first_code||'').toLowerCase();
+                let matchTable = fc.tables.some(t => {
+                    const mok = ['1','2','0'].some(s => (t.sentiments[String(s)]?.match_types||[]).some(x => x.toLowerCase().includes(q)));
+                    const cok = ['1','2','0'].some(s => (t.sentiments[String(s)]?.data_codes||[]).some(x => x.toLowerCase().includes(q)));
+                    return mok || cok;
+                });
+                return name.includes(q) || code.includes(q) || matchTable;
+            });
+            render();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function esc(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    </script>
+</body>
+</html>
